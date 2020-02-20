@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 import os
 import skimage.io
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior() 
 
 import vgg19
 
@@ -63,7 +64,7 @@ def main(content_path, style_path, output_dir, iterations, vgg_path, preserve_co
 
         sess.run(tf.global_variables_initializer())
         content_rep = sess.run(getattr(content_vgg, CONTENT_LAYER), feed_dict={content: content_img})
-        style_rep = sess.run(get_style_rep(style_vgg), feed_dict={style: style_img})
+        style_rep = sess.run(getattr(style_vgg, CONTENT_LAYER), feed_dict={style: style_img})
 
     # start with white noise
     noise = tf.truncated_normal(content_img.shape, stddev=0.1*np.std(content_img))
@@ -84,7 +85,7 @@ def main(content_path, style_path, output_dir, iterations, vgg_path, preserve_co
             sess.run(optimizer)
             fmt_str = 'Iteration {:4}/{:4}    content loss {:14}  style loss {:14}'
             print(fmt_str.format(i, iterations, ALPHA*content_loss.eval(), BETA*style_loss.eval()))
-
+            
             # undo mean subtract and save output image
             output_path = os.path.join(output_dir, 'output_{:04}.jpg'.format(i))
             save_image(image.eval(), output_path, content_yuv if preserve_color else None)
